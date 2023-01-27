@@ -38,18 +38,28 @@ class CPTP_Module_Admin extends CPTP_Module {
 		$post_types = CPTP_Util::get_post_types();
 
 		foreach ( $post_types as $post_type ) {
+			$option = $post_type . '_structure';
+
 			add_settings_field(
-				$post_type . '_structure',
+				$option,
 				$post_type,
 				array( $this, 'setting_structure_callback_function' ),
 				'permalink',
 				'cptp_setting_section',
 				array(
-					'label_for' => $post_type . '_structure',
+					'label_for' => $option,
 					'post_type' => $post_type,
 				)
 			);
-			register_setting( 'permalink', $post_type . '_structure' );
+
+			register_setting(
+				'permalink',
+				$option,
+				array(
+					'type'              => 'string',
+					'sanitize_callback' => fn( $value ) => $this->sanitize_post_type_structure( $value, $option ),
+				) 
+			);
 		}
 
 		add_settings_field(
@@ -63,7 +73,15 @@ class CPTP_Module_Admin extends CPTP_Module {
 			)
 		);
 
-		register_setting( 'permalink', 'no_taxonomy_structure' );
+		register_setting(
+			'permalink',
+			'no_taxonomy_structure',
+			array(
+				'type'              => 'boolean',
+				'default'           => true,
+				'sanitize_callback' => 'wp_validate_boolean',
+			) 
+		);
 
 		add_settings_field(
 			'add_post_type_for_tax',
@@ -76,7 +94,15 @@ class CPTP_Module_Admin extends CPTP_Module {
 			)
 		);
 
-		register_setting( 'permalink', 'add_post_type_for_tax' );
+		register_setting(
+			'permalink',
+			'add_post_type_for_tax',
+			array(
+				'type'              => 'boolean',
+				'default'           => false,
+				'sanitize_callback' => 'wp_validate_boolean',
+			)
+		);
 	}
 
 	/**
@@ -165,11 +191,21 @@ class CPTP_Module_Admin extends CPTP_Module {
 			<code><?php echo esc_html( home_url() . ( $slug ? '/' : '' ) . $slug ); ?></code>
 			<input
 				name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" type="text"
-				class="regular-text code "
+				class="regular-text code"
 				value="<?php echo esc_attr( $value ); ?>" <?php disabled( $disabled, true, true ); ?> />
 		</p>
-		<p>has_archive: <code><?php echo esc_html( $pt_object->has_archive ? 'true' : 'false' ); ?></code> / with_front:
-			<code><?php echo esc_html( $pt_object->rewrite['with_front'] ? 'true' : 'false' ); ?></code></p>
+		<p>
+			<?php
+			echo sprintf(
+				// translators: 1. True/false for whether there should be post type archives. 2. True/false for whether the permastruct should be prepended with the global rewrite prefix.
+				esc_html__( 'has_archive: %1$s / with_front: %2$s', 'custom-post-type-permalinks' ),
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				'<code>' . ( $pt_object->has_archive ? esc_html_x( 'true', 'boolean value', 'custom-post-type-permalinks' ) : esc_html_x( 'false', 'boolean value', 'custom-post-type-permalinks' ) ) . '</code>',
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				'<code>' . ( $pt_object->rewrite['with_front'] ? esc_html_x( 'true', 'boolean value', 'custom-post-type-permalinks' ) : esc_html_x( 'false', 'boolean value', 'custom-post-type-permalinks' ) ) . '</code>'
+			);
+			?>
+		</p>
 		<?php
 	}
 
@@ -234,5 +270,63 @@ class CPTP_Module_Admin extends CPTP_Module {
 			echo sprintf( '<div class="notice notice-warning"><p>%s</p></div>', wp_kses( $message, wp_kses_allowed_html( 'post' ) ) );
 		}
 	}
-}
 
+	/**
+	 * Sanitize post type permalink structures.
+	 *
+	 * @param string $structure  New permastruct.
+	 * @param string $option     Option name.
+	 *
+	 * @return string
+	 */
+	public function sanitize_post_type_structure( $structure, $option ) {
+		global $wpdb;
+		$error = null;
+
+		// Validate and sanitize using same rules as permalink_structure.
+		// See `sanitize_option()`.
+		$structure = $wpdb->strip_invalid_text_for_column( $wpdb->options, 'option_value', $structure );
+		if ( is_wp_error( $structure ) ) {
+			$error = $structure->get_error_message();
+		} else {
+			$structure = esc_url_raw( $structure );
+			$structure = str_replace( 'http://', '', $structure );
+		}
+
+		if ( null === $error && '' !== $structure && ! preg_match( '/%[^\/%]+%/', $structure ) ) {
+			$error = sprintf(
+				/* translators: %s: Documentation URL. */
+				__( 'A structure tag is required when using custom permalinks. <a href="%s">Learn more</a>' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				__( 'https://wordpress.org/support/article/using-permalinks/#choosing-your-permalink-structure' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			);
+		}
+
+		// Bail if error.
+		if ( null !== $error ) {
+			if ( function_exists( 'add_settings_error' ) ) {
+				add_settings_error( $option, "invalid_{$option}", $error );
+			}
+			return get_option( $option );
+		}
+
+		// Default permalink structure.
+		if ( ! $structure ) {
+			$structure = CPTP_DEFAULT_PERMALINK;
+		}
+
+		// Add leading "/".
+		$structure = '/' . trim( $structure );
+
+		// Add/remove trailing "/" if needed.
+		$lastString = substr( trim( esc_attr( filter_input( INPUT_POST, 'permalink_structure', FILTER_SANITIZE_URL ) ) ), -1 );
+
+		if ( '/' === $lastString ) {
+			$structure = $structure . '/';
+		}
+
+		// Cleanup duplicate "/".
+		$structure = preg_replace( '/\/{2,}/', '/', $structure );
+
+		return $structure;
+	}
+}

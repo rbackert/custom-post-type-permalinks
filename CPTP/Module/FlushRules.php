@@ -43,6 +43,8 @@ class CPTP_Module_FlushRules extends CPTP_Module {
 	 */
 	public static function dequeue_flush_rules() {
 		if ( get_option( 'queue_flush_rules' ) ) {
+			// Allow `flush_rewrite_rules`, since it only runs after relevant options are updated.
+			// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.flush_rewrite_rules_flush_rewrite_rules
 			flush_rewrite_rules();
 			update_option( 'queue_flush_rules', 0 );
 		}
@@ -70,6 +72,6 @@ class CPTP_Module_FlushRules extends CPTP_Module {
 	 * Fire on activate
 	 */
 	public function activation_hook() {
-		CPTP_Module_FlushRules::queue_flush_rules();
+		self::queue_flush_rules();
 	}
 }

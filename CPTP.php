@@ -131,7 +131,7 @@ class CPTP {
 	 * @since 2.0.0
 	 */
 	public static function uninstall() {
-		$cptp = CPTP::get_instance();
+		$cptp = self::get_instance();
 
 		foreach ( $cptp->modules as $module ) {
 			$module->uninstall_hook();

@@ -17,7 +17,8 @@
         "phpcompatibility/phpcompatibility-wp": "*",
         "squizlabs/php_codesniffer": "*",
         "wp-coding-standards/wpcs": "*",
-        "yoast/phpunit-polyfills": "^1.0.1"
+        "yoast/phpunit-polyfills": "^1.0.1",
+        "automattic/vipwpcs": "^2.3"
     },
     "scripts": {
         "phpcs": [
@@ -27,5 +28,10 @@
             "@php vendor/bin/phpcbf --standard=./.phpcs.xml.dist --report-summary --report-source"
         ],
         "test": "@php ./vendor/phpunit/phpunit/phpunit"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }

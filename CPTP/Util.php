@@ -123,7 +123,7 @@ class CPTP_Util {
 
 		if ( $parent->parent && ( $parent->parent !== $parent->term_id ) && ! in_array( $parent->parent, $visited, true ) ) {
 			$visited[] = $parent->parent;
-			$chain    .= CPTP_Util::get_taxonomy_parents_slug( $parent->parent, $taxonomy, $separator, $nicename, $visited );
+			$chain    .= self::get_taxonomy_parents_slug( $parent->parent, $taxonomy, $separator, $nicename, $visited );
 		}
 		$chain .= $name . $separator;
 
@@ -159,7 +159,7 @@ class CPTP_Util {
 
 		if ( $parent->parent && ( $parent->parent !== $parent->term_id ) && ! in_array( $parent->parent, $visited, true ) ) {
 			$visited[] = $parent->parent;
-			$chain    .= CPTP_Util::get_taxonomy_parents( $parent->parent, $taxonomy, $link, $separator, $nicename, $visited );
+			$chain    .= self::get_taxonomy_parents( $parent->parent, $taxonomy, $link, $separator, $nicename, $visited );
 		}
 		if ( $link ) {
 			// phpcs:ignore
@@ -251,7 +251,7 @@ class CPTP_Util {
 	 * @return string
 	 */
 	public static function get_date_front( $post_type ) {
-		$structure = CPTP_Util::get_permalink_structure( $post_type );
+		$structure = self::get_permalink_structure( $post_type );
 
 		$front = '';
 
