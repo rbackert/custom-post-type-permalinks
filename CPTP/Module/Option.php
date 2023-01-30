@@ -27,11 +27,17 @@ class CPTP_Module_Option extends CPTP_Module {
 	 * @return bool
 	 */
 	public function save_options() {
+		$referrer = wp_get_raw_referer();
+
 		// Verify access.
 		if ( ! (
-			filter_input( INPUT_POST, 'submit' ) && 
+			// Submitted.
+			filter_input( INPUT_POST, 'submit' ) &&
+			// With verified nonce.
 			check_admin_referer( 'update-permalink' ) &&
-			false !== strpos( wp_get_referer(), 'options-permalink.php' )
+			// From permalink page.
+			$referrer &&
+			str_contains( $referrer, 'options-permalink.php')
 		) ) {
 			return false;
 		}
