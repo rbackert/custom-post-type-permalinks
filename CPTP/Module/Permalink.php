@@ -403,15 +403,17 @@ class CPTP_Module_Permalink extends CPTP_Module {
 			return $termlink;
 		}
 
-		$slug       = $post_type_obj->rewrite['slug'];
-		$with_front = $post_type_obj->rewrite['with_front'];
-
-		if ( $with_front ) {
-			$slug = $front . $slug;
-		}
-
-		if ( ! empty( $slug ) ) {
-			$termlink = str_replace( $wp_home, $wp_home . '/' . $slug, $termlink );
+		if ( $post_type_obj->rewrite ) {
+			$slug       = $post_type_obj->rewrite['slug'];
+			$with_front = $post_type_obj->rewrite['with_front'];
+	
+			if ( $with_front ) {
+				$slug = $front . $slug;
+			}
+	
+			if ( ! empty( $slug ) ) {
+				$termlink = str_replace( $wp_home, $wp_home . '/' . $slug, $termlink );
+			}
 		}
 
 		if ( ! $taxonomy->rewrite['hierarchical'] ) {
