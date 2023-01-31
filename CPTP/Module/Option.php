@@ -37,7 +37,7 @@ class CPTP_Module_Option extends CPTP_Module {
 			check_admin_referer( 'update-permalink' ) &&
 			// From permalink page.
 			$referrer &&
-			str_contains( $referrer, 'options-permalink.php')
+			str_contains( $referrer, 'options-permalink.php' )
 		) ) {
 			return false;
 		}
