@@ -385,6 +385,10 @@ class CPTP_Module_Permalink extends CPTP_Module {
 		if ( ! $taxonomy->public ) {
 			return $termlink;
 		}
+		
+		if ( ! $taxonomy->rewrite ) {
+			return $termlink;
+		}
 
 		$wp_home = rtrim( home_url(), '/' );
 

@@ -23,8 +23,6 @@ class CPTP_Module_Option extends CPTP_Module {
 
 	/**
 	 * Save Options.
-	 *
-	 * @return bool
 	 */
 	public function save_options() {
 		$referrer = wp_get_raw_referer();

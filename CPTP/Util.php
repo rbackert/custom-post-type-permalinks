@@ -71,6 +71,50 @@ class CPTP_Util {
 		$support = apply_filters( 'CPTP_is_rewrite_supported', $support, $post_type );
 		return apply_filters( 'cptp_is_rewrite_supported', $support, $post_type );
 	}
+	/**
+	 * Check taxonomy support rewrite.
+	 *
+	 * @param string|\WP_Taxonomy $taxonomy taxonomy name or taxonomy.
+	 *
+	 * @return bool
+	 */
+	private static function is_rewrite_supported_by_taxonomy( $taxonomy ) {
+		$taxonomy_object = false;
+
+		if ( $taxonomy instanceof \WP_Taxonomy ) {
+			$taxonomy_object = $taxonomy;
+			$taxonomy = $taxonomy_object->name;
+		} elseif ( is_string( $taxonomy ) ) {
+			$taxonomy_object = get_taxonomy( $taxonomy );
+		}
+			
+		if ( ! $taxonomy_object || false === $taxonomy_object->rewrite ) {
+			$support = false;
+		} else {
+			$support = true;
+		}
+
+		/**
+		 * Filters support CPTP for custom taxonomy.
+		 *
+		 * @since 3.2.0
+		 *
+		 * @param bool $support support CPTP.
+		 */
+		$support = apply_filters( "CPTP_is_taxonomy_rewrite_supported_by_${taxonomy}", $support );
+		$support = apply_filters( "cptp_is_taxonomy_rewrite_supported_by_${taxonomy}", $support );
+
+		/**
+		 * Filters support CPTP for custom taxonomy.
+		 *
+		 * @since 3.2.0
+		 *
+		 * @param bool $support support CPTP.
+		 * @param string $post_type taxonomy name.
+		 */
+		$support = apply_filters( 'CPTP_is_taxonomy_rewrite_supported', $support, $taxonomy );
+		return apply_filters( 'cptp_is_taxonomy_rewrite_supported', $support, $taxonomy );
+	}
 
 	/**
 	 * Get taxonomies.
@@ -86,13 +130,15 @@ class CPTP_Util {
 			$output = 'names';
 		}
 
-		return get_taxonomies(
+		$taxonomies = get_taxonomies(
 			array(
 				'public'   => true,
 				'_builtin' => false,
 			),
 			$output
 		);
+
+		return array_filter( $taxonomies, array( __CLASS__, 'is_rewrite_supported_by_taxonomy' ) );
 	}
 
 	/**
